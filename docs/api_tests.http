@@ -1,0 +1,256 @@
+###############################################################
+# API TEST FILE — AI-Powered Quiz API
+# Works with VS Code "REST Client" extension (humao.rest-client)
+# OR use as reference for Postman / Insomnia / curl
+#
+# HOW TO USE IN VS CODE:
+#   1. Install: Extensions → search "REST Client" by Huachao Mao
+#   2. Open this file in VS Code
+#   3. Click "Send Request" that appears above each ### block
+#
+# ORDER MATTERS: Run 1.1 (register), then 1.3 (login),
+# copy the access token into @token, then run the rest.
+###############################################################
+
+@baseUrl = http://localhost:8000/api
+@token =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0MDAxOTQ5LCJpYXQiOjE3NzM5OTgzNDksImp0aSI6ImExNTBkODBiM2JhZTQ2YTNhZDQ4MjBiNzQxYjk1MWU4IiwidXNlcl9pZCI6Mn0.zWtQwnBOUWW4qz9_dn1-l7-KSOZHjQbjCGUdLTOz5jc
+
+
+# ══════════════════════════════════════════════════════════════
+# 1. AUTHENTICATION
+# ══════════════════════════════════════════════════════════════
+
+### 1.1 Register a new user
+POST {{baseUrl}}/users/register/
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "TestPass123!",
+  "password_confirm": "TestPass123!"
+}
+
+### 1.2 Login - copy "access" value from response, paste into @token above
+POST {{baseUrl}}/auth/login/
+Content-Type: application/json
+
+{"username":"testuser","password":"TestPass123!"}
+
+### 1.3 Refresh access token
+POST {{baseUrl}}/auth/refresh/
+Content-Type: application/json
+
+{
+  "refresh": "PASTE_REFRESH_TOKEN_HERE"
+}
+
+
+# ══════════════════════════════════════════════════════════════
+# 2. USER PROFILE
+# ══════════════════════════════════════════════════════════════
+
+### 2.1 View my profile
+GET {{baseUrl}}/users/me/
+Authorization: Bearer {{token}}
+
+---
+
+### 2.2 Update my profile (bio and email)
+PATCH {{baseUrl}}/users/me/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "bio": "I love quizzes!",
+  "email": "updated@example.com"
+}
+
+
+# ══════════════════════════════════════════════════════════════
+# 3. CREATE A QUIZ (triggers AI question generation)
+# ══════════════════════════════════════════════════════════════
+
+### 3.1 Create a Python quiz (easy, 5 questions)
+POST {{baseUrl}}/quiz/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"title":"Python Basics Quiz","topic":"Python programming basics","difficulty":"easy","question_count":5}
+
+### 3.2 Create a history quiz (hard, 8 questions)
+POST {{baseUrl}}/quiz/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "World History Challenge",
+  "topic": "World War 2",
+  "difficulty": "hard",
+  "question_count": 8
+}
+
+---
+
+### 3.3 Create a quiz — validation error (too many questions)
+POST {{baseUrl}}/quiz/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Too Big",
+  "topic": "Science",
+  "difficulty": "medium",
+  "question_count": 99
+}
+# Expected: 400 Bad Request — "Must be between 3 and 20."
+
+
+# ══════════════════════════════════════════════════════════════
+# 4. BROWSING QUIZZES
+# ══════════════════════════════════════════════════════════════
+
+### 4.1 List all available quizzes (paginated, 10 per page)
+GET {{baseUrl}}/quiz/
+Authorization: Bearer {{token}}
+
+---
+
+### 4.2 Filter by topic
+GET {{baseUrl}}/quiz/?topic=python
+Authorization: Bearer {{token}}
+
+---
+
+### 4.3 Filter by difficulty
+GET {{baseUrl}}/quiz/?difficulty=easy
+Authorization: Bearer {{token}}
+
+---
+
+### 4.4 Get details of quiz id=1 (includes all questions, no answers)
+GET {{baseUrl}}/quiz/1/
+Authorization: Bearer {{token}}
+
+---
+
+### 4.5 My created quizzes
+GET {{baseUrl}}/quiz/my-quizzes/
+Authorization: Bearer {{token}}
+
+
+# ══════════════════════════════════════════════════════════════
+# 5. TAKING A QUIZ
+# ══════════════════════════════════════════════════════════════
+
+### 5.1 Start a new attempt for quiz id=1
+# Returns attempt_id — you need this to submit answers
+POST {{baseUrl}}/quiz/1/attempt/
+Authorization: Bearer {{token}}
+
+---
+
+### 5.2 Submit answers for attempt id=1
+# Replace question IDs with actual IDs from step 4.4
+# Options must be "A", "B", "C", or "D"
+# After submitting: correct answers + explanations are revealed
+POST {{baseUrl}}/quiz/attempts/1/submit/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "answers": [
+    { "question_id": 1, "selected_option": "B" },
+    { "question_id": 2, "selected_option": "A" },
+    { "question_id": 3, "selected_option": "C" },
+    { "question_id": 4, "selected_option": "D" },
+    { "question_id": 5, "selected_option": "A" }
+  ]
+}
+
+---
+
+### 5.3 View attempt results (with correct answers revealed)
+GET {{baseUrl}}/quiz/attempts/1/
+Authorization: Bearer {{token}}
+
+---
+
+### 5.4 My attempts history
+GET {{baseUrl}}/quiz/my-attempts/
+Authorization: Bearer {{token}}
+
+
+# ══════════════════════════════════════════════════════════════
+# 6. ANALYTICS
+# ══════════════════════════════════════════════════════════════
+
+### 6.1 My overall performance stats
+GET {{baseUrl}}/analytics/me/
+Authorization: Bearer {{token}}
+
+---
+
+### 6.2 My quiz history with scores
+GET {{baseUrl}}/analytics/history/
+Authorization: Bearer {{token}}
+
+---
+
+### 6.3 Global leaderboard (top 10 by avg score)
+GET {{baseUrl}}/analytics/leaderboard/
+Authorization: Bearer {{token}}
+
+---
+
+### 6.4 Leaderboard for quiz id=1 only
+GET {{baseUrl}}/analytics/leaderboard/?quiz_id=1
+Authorization: Bearer {{token}}
+
+---
+
+### 6.5 Stats for quiz id=1 (creator or admin only)
+GET {{baseUrl}}/analytics/quiz/1/
+Authorization: Bearer {{token}}
+
+---
+
+### 6.6 Admin dashboard (admin role required)
+GET {{baseUrl}}/analytics/admin/dashboard/
+Authorization: Bearer {{token}}
+
+
+# ══════════════════════════════════════════════════════════════
+# 7. ADMIN OPERATIONS
+# ══════════════════════════════════════════════════════════════
+# First create an admin:
+#   python manage.py createsuperuser
+#   Open /admin/ → Users → set role to "admin"
+#   Then log in with that user and update @token
+
+### 7.1 List all users
+GET {{baseUrl}}/users/
+Authorization: Bearer {{token}}
+
+---
+
+### 7.2 Promote user id=2 to admin
+POST {{baseUrl}}/users/2/promote/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "role": "admin"
+}
+
+---
+
+### 7.3 View all attempts by all users
+GET {{baseUrl}}/quiz/all-attempts/
+Authorization: Bearer {{token}}
+
+---
+
+### 7.4 Delete quiz id=1 (must be creator or admin)
+DELETE {{baseUrl}}/quiz/1/
+Authorization: Bearer {{token}}
