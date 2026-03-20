@@ -202,6 +202,6 @@ CACHES = {
 # AI SERVICE SETTINGS
 # ─────────────────────────────────────────────
 # We use Google Gemini (free tier). Get your key at: https://aistudio.google.com
-GEMINI_API_KEY = "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"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 AI_CACHE_TIMEOUT = 60 * 60 * 24  # 24 hours
