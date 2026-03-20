@@ -184,8 +184,8 @@ SIMPLE_JWT = {
 # ─────────────────────────────────────────────
 # Allow all origins in dev. Restrict in production.
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if not DEBUG else []
-
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()] if not DEBUG else []
 # ─────────────────────────────────────────────
 # CACHE SETTINGS (simple in-memory cache)
 # ─────────────────────────────────────────────
